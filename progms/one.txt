@@ -1,3 +1,5 @@
+#ONE
+# This program demonstrates various image processing techniques using OpenCV and Matplotlib.
 # === IMPORT LIBRARIES ===
 import cv2
 import numpy as np

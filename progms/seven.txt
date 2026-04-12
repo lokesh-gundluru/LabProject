@@ -1,3 +1,5 @@
+#SEVEN
+# This program implements a Convolutional Neural Network (CNN) for image classification on the MN
 # === IMPORT ===
 import numpy as np
 import matplotlib.pyplot as plt

@@ -1,3 +1,5 @@
+#TEN
+# This program implements a simple Recurrent Neural Network (RNN) with an attention mechanism for
 # === IMPORT ===
 import numpy as np
 import matplotlib.pyplot as plt

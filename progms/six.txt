@@ -1,3 +1,5 @@
+#SIX
+# This program implements a simple text classification model using the Reuters dataset. It uses an Embedding
 # === IMPORT LIBRARIES ===
 import numpy as np
 import matplotlib.pyplot as plt

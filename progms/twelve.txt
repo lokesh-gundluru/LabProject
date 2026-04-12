@@ -1,3 +1,5 @@
+#TWELVE
+# This program implements a U-Net architecture for image segmentation on the Oxford-IIIT Pet dataset.
 # === IMPORT ===
 import numpy as np 
 import matplotlib.pyplot as plt 

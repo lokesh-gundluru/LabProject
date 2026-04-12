@@ -1,3 +1,5 @@
+#EIGHT
+# This program implements a simple Recurrent Neural Network (RNN) for sentiment analysis on the
 # === IMPORT ===
 import numpy as np
 import matplotlib.pyplot as plt

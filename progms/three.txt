@@ -1,3 +1,5 @@
+#THREE
+# This program demonstrates various activation functions commonly used in neural networks, including Step, Sigmoid,
 # === IMPORT ===
 import numpy as np
 
