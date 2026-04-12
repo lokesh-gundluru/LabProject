@@ -1,0 +1,41 @@
+# === IMPORT ===
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# === LOAD DATA ===
+iris=load_iris()
+x=iris.data[:,:2]
+y=iris.target
+y=[1 if label==0 else -1 for label in y]
+
+# === SPLIT ===
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
+
+# === INIT ===
+w1,w2=0.0,0.0
+b=0.0
+lr=0.1
+
+# === TRAIN ===
+for _ in range(50):
+  for i in range(len(x_train)):
+    x1,x2=x_train[i]
+    z=w1*x1+w2*x2+b
+    y_pred = 1 if z >= 0 else -1
+
+    if y_train[i] != y_pred:
+      w1+=lr*y_train[i]*x1
+      w2+=lr*y_train[i]*x2
+      b+=lr*y_train[i]
+  print(f"Epochs {_+1}:w1={w1:.2f},w2={w2:.2f},b={b:.2f}")
+
+# === TEST ===
+y_pred=[]
+for i in range(len(x_test)):
+  x1,x2=x_test[i]
+  z=w1*x1+w2*x2+b
+  y_pred.append(1 if z>=0 else -1)
+
+# === OUTPUT ===
+print("ACCURACY:",accuracy_score(y_test,y_pred)*100,"%")

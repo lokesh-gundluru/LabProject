@@ -1,0 +1,51 @@
+# === IMPORT LIBRARIES ===
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# === LOAD IMAGE ===
+img = cv2.imread('shiv.jpg')
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+# === CONVERT TO GRAYSCALE ===
+gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+# === HISTOGRAM EQUALIZATION ===
+equalized = cv2.equalizeHist(gray)
+
+# === THRESHOLDING ===
+_, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+
+# === EDGE DETECTION ===
+edges = cv2.Canny(gray, 100, 200)
+
+# === DATA AUGMENTATION ===
+flip = cv2.flip(img, 1)
+rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+
+# === MORPHOLOGICAL OPERATIONS ===
+kernel = np.ones((5,5), np.uint8)
+erosion = cv2.erode(thresh, kernel, iterations=1)
+dilation = cv2.dilate(thresh, kernel, iterations=1)
+
+# === STORE RESULTS ===
+images = [img, gray, equalized, thresh, edges, flip, rotate, erosion, dilation]
+titles = ["Original", "Grayscale", "Histogram Eq", "Threshold",
+          "Edges", "Flipped", "Rotated", "Erosion", "Dilation"]
+
+# === DISPLAY OUTPUT ===
+plt.figure(figsize=(12,10))
+
+for i in range(len(images)):
+    plt.subplot(3,3,i+1)
+
+    if len(images[i].shape) == 2:
+        plt.imshow(images[i], cmap='gray')
+    else:
+        plt.imshow(images[i])
+
+    plt.title(titles[i])
+    plt.axis('off')
+
+plt.tight_layout()
+plt.show()

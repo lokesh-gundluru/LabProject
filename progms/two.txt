@@ -1,0 +1,45 @@
+# === IMPORT LIBRARIES ===
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# === LOAD DATASET ===
+iris = load_iris()
+X = iris.data[:, :2]
+y = iris.target
+
+# === CONVERT TO BINARY CLASSIFICATION ===
+y = [1 if label == 0 else -1 for label in y]
+
+# === SPLIT DATA ===
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# === INITIALIZE PARAMETERS ===
+w1, w2 = 0.0, 0.0
+b = 0.0
+lr = 0.1
+
+# === TRAINING LOOP ===
+for _ in range(50):
+    for i in range(len(X_train)):
+        x1, x2 = X_train[i]
+        z = w1*x1 + w2*x2 + b
+
+        y_pred = 1 if z >= 0 else -1
+
+        if y_train[i] != y_pred:
+            w1 += lr * y_train[i] * x1
+            w2 += lr * y_train[i] * x2
+            b += lr * y_train[i]
+
+# === TESTING ===
+y_pred = []
+for i in range(len(X_test)):
+    x1, x2 = X_test[i]
+    z = w1*x1 + w2*x2 + b
+    y_pred.append(1 if z >= 0 else -1)
+
+# === ACCURACY ===
+print("Accuracy:", accuracy_score(y_test, y_pred) * 100, "%")
