@@ -1,18 +1,29 @@
+# === PROGRAM STORAGE ===
+programs = {
+    "1": "print('Program 1 working')",
+    "2": "print('Program 2 working')"
+}
+
+# === HANDLER ===
 def handler(request):
-    programs = {
-        "1": "print('Program 1')",
-        "2": "print('Program 2')"
-    }
+    try:
+        # Get path safely
+        path = request.get("path", "")
+        num = path.split("/")[-1]
 
-    path = request.path.split("/")[-1]
-    code = programs.get(path, "Program not found")
+        code = programs.get(num, "Program not found")
 
-    return {
-        "statusCode": 200,
-        "headers": {"Content-Type": "text/plain"},
-        "body": code
-    }
+        return {
+            "statusCode": 200,
+            "headers": {"Content-Type": "text/plain"},
+            "body": code
+        }
 
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": f"Error: {str(e)}"
+        }
 
-# 👇 THIS LINE IS THE KEY (YOU MISSED THIS)
+# === REQUIRED EXPORT ===
 app = handler
