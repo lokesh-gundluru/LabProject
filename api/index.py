@@ -21,7 +21,8 @@ def load_program(num):
         "9": "nine.txt",
         "10": "ten.txt",
         "11": "eleven.txt",
-        "12": "twelve.txt"
+        "12": "twelve.txt",
+        "100": "bda1.txt"
     }
 
     file = filename_map.get(num)
