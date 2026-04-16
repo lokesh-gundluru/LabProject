@@ -1,0 +1,137 @@
+Aim
+To install and configure a Multi Node Hadoop Cluster in fully distributed mode using one Master node and multiple Slave nodes, and to verify the working of HDFS.
+________________________________________
+Description
+In a Multi Node Hadoop Cluster, Hadoop daemons are distributed across multiple machines.
+•	Master Node runs NameNode and ResourceManager
+•	Slave Nodes run DataNode and NodeManager
+This setup is used in real-time big data environments.
+________________________________________
+Software & Hardware Requirements
+Software Requirements
+•	Operating System: Linux (Ubuntu preferred)
+•	Java JDK: Version 8
+•	Hadoop Version: 3.3.6
+•	SSH enabled (passwordless SSH)
+Hardware Requirements
+•	Minimum 2 or more systems (or virtual machines)
+•	RAM: Minimum 4 GB per node
+•	Network connectivity between nodes
+________________________________________
+Cluster Architecture
+Node Type	Services Running
+Master Node	NameNode, SecondaryNameNode
+Slave Node(s)	DataNode
+________________________________________
+Prerequisites (On All Nodes)
+Step 1: Install Java
+sudo apt update
+sudo apt install openjdk-8-jdk -y
+java -version
+Step 2: Set JAVA_HOME
+nano ~/.bashrc
+Add:
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=$PATH:$JAVA_HOME/bin
+Apply:
+source ~/.bashrc
+________________________________________
+Hadoop Installation (On All Nodes)
+Step 3: Download and Install Hadoop
+wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+tar -xvzf hadoop-3.3.6.tar.gz
+sudo mv hadoop-3.3.6 /usr/local/hadoop
+________________________________________
+Step 4: Set Hadoop Environment Variables
+Edit .bashrc:
+nano ~/.bashrc
+Add:
+export HADOOP_HOME=/usr/local/hadoop
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+Apply:
+source ~/.bashrc
+________________________________________
+Passwordless SSH Configuration (Master → Slaves)
+Step 5: Generate SSH Key (On Master Node)
+ssh-keygen -t rsa
+Press Enter for all prompts.
+Step 6: Copy SSH Key to Slave Nodes
+ssh-copy-id slave1
+ssh-copy-id slave2
+Test:
+ssh slave1
+________________________________________
+Hadoop Configuration (Master Node)
+Step 7: Configure hadoop-env.sh
+nano $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+Set:
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+________________________________________
+Step 8: Configure core-site.xml
+nano $HADOOP_HOME/etc/hadoop/core-site.xml
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://master:9000</value>
+  </property>
+</configuration>
+________________________________________
+Step 9: Configure hdfs-site.xml
+nano $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+<configuration>
+  <property>
+    <name>dfs.replication</name>
+    <value>2</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>file:/usr/local/hadoop/data/namenode</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>file:/usr/local/hadoop/data/datanode</value>
+  </property>
+</configuration>
+________________________________________
+Step 10: Configure Workers File
+nano $HADOOP_HOME/etc/hadoop/workers
+Add slave node hostnames:
+slave1
+slave2
+________________________________________
+Directory Creation (All Nodes)
+mkdir -p /usr/local/hadoop/data/namenode
+mkdir -p /usr/local/hadoop/data/datanode
+________________________________________
+Formatting the NameNode (Master Only)
+Step 11: Format HDFS
+hdfs namenode -format
+________________________________________
+Starting Hadoop Cluster
+Step 12: Start HDFS Services
+start-dfs.sh
+________________________________________
+Verification
+Step 13: Verify Running Daemons
+jps
+Expected on Master:
+•	NameNode
+•	SecondaryNameNode
+Expected on Slave Nodes:
+•	DataNode
+________________________________________
+Step 14: Verify HDFS
+hdfs dfs -ls /
+________________________________________
+Step 15: Access Hadoop Web UI
+•	NameNode Web UI:
+•	http://master:9870
+________________________________________
+Result
+Thus, a Multi Node Hadoop Cluster was successfully installed and configured in fully distributed mode, and HDFS operations were verified successfully using Apache Hadoop.
+
+
+

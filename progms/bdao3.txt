@@ -1,0 +1,242 @@
+Aim
+To develop and execute a MapReduce program for Word Count on HDFS input.
+
+Procedure
+1.	Start Hadoop services (HDFS + YARN).
+2.	Create an input file and upload it to HDFS.
+3.	Write WordCount MapReduce program in Java.
+4.	Compile the program and create a JAR file.
+5.	Run the WordCount job on Hadoop.
+6.	Display output from HDFS.
+
+Code
+Step 1: Start services
+start-dfs.sh
+start-yarn.sh
+jps
+Step 2: Create input file (local)
+nano input.txt
+Enter:
+hadoop mapreduce hadoop
+big data hadoop
+mapreduce is parallel
+hadoop is distributed
+big data analytics
+Step 3: Upload to HDFS
+hdfs dfs -mkdir -p /mr/input
+hdfs dfs -put input.txt /mr/input/
+hdfs dfs -ls /mr/input
+Step 4: WordCount Program (WordCount.java)
+import java.io.IOException;
+import java.util.StringTokenizer;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class WordCount {
+
+  public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable> {
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
+
+    public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+      StringTokenizer itr = new StringTokenizer(value.toString());
+      while (itr.hasMoreTokens()) {
+        word.set(itr.nextToken().toLowerCase());
+        context.write(word, one);
+      }
+    }
+  }
+
+  public static class IntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+    private IntWritable result = new IntWritable();
+
+    public void reduce(Text key, Iterable<IntWritable> values, Context context)
+        throws IOException, InterruptedException {
+      int sum = 0;
+      for (IntWritable val : values) sum += val.get();
+      result.set(sum);
+      context.write(key, result);
+    }
+  }
+
+  public static void main(String[] args) throws Exception {
+    Configuration conf = new Configuration();
+    Job job = Job.getInstance(conf, "word count");
+    job.setJarByClass(WordCount.class);
+    job.setMapperClass(TokenizerMapper.class);
+    job.setCombinerClass(IntSumReducer.class);
+    job.setReducerClass(IntSumReducer.class);
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+
+    FileInputFormat.addInputPath(job, new Path(args[0]));
+    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    System.exit(job.waitForCompletion(true) ? 0 : 1);
+  }
+}
+Step 5: Compile + Jar
+mkdir -p classes
+javac -classpath "$(hadoop classpath)" -d classes WordCount.java
+jar -cvf wordcount.jar -C classes/ .
+Step 6: Run Job
+hdfs dfs -rm -r /mr/output_wc
+hadoop jar wordcount.jar WordCount /mr/input /mr/output_wc
+hdfs dfs -cat /mr/output_wc/part-r-00000
+________________________________________
+Expected Output
+1.	HDFS input listing:
+hdfs dfs -ls /mr/input
+Expected:
+input.txt
+2.	WordCount output:
+hdfs dfs -cat /mr/output_wc/part-r-00000
+Expected:
+analytics    1
+big          2
+data         2
+distributed  1
+hadoop       4
+is           2
+mapreduce    2
+parallel     1
+________________________________________
+Result
+Thus, the MapReduce Word Count program was successfully executed and word frequencies were generated in HDFS output.
+________________________________________
+
+________________________________________
+
+3 b. 
+Aim
+To develop and execute a MapReduce program to perform sorting of output in Hadoop.
+________________________________________
+Procedure
+1.	Use the WordCount output (key–value pairs).
+2.	Observe that Hadoop automatically sorts keys in ascending order.
+3.	Display the sorted output from HDFS.
+________________________________________
+Code
+Step 1: View WordCount output (sorted by key by default)
+hdfs dfs -cat /mr/output_wc/part-r-00000
+Optional: Force a separate “sort check” using HDFS + Linux sort (for verification)
+hdfs dfs -cat /mr/output_wc/part-r-00000 | sort
+________________________________________
+Expected Output
+When you display the output file, keys will appear sorted alphabetically:
+hdfs dfs -cat /mr/output_wc/part-r-00000
+Expected (sorted):
+analytics    1
+big          2
+data         2
+distributed  1
+hadoop       4
+is           2
+mapreduce    2
+parallel     1
+________________________________________
+Result
+Thus, sorting was successfully observed in MapReduce output (Hadoop sorts keys automatically during shuffle and sort phase).
+________________________________________
+________________________________________
+
+3 c. 
+Aim
+To develop and execute a MapReduce program for filtering records and to observe parallel execution flow.
+________________________________________
+Procedure
+1.	Write a Map-only MapReduce program to filter lines containing a keyword.
+2.	Compile and create jar.
+3.	Run the filtering job on HDFS dataset.
+4.	View the output.
+5.	Open YARN UI and observe parallel execution (map tasks / containers / logs).
+________________________________________
+Code
+Step 1: Filter Program (FilterByKeyword.java)
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class FilterByKeyword {
+
+  public static class FilterMapper extends Mapper<LongWritable, Text, Text, Text> {
+    private Text outKey = new Text("match");
+    private Text outVal = new Text();
+    private String keyword;
+
+    protected void setup(Context context) {
+      keyword = context.getConfiguration().get("keyword").toLowerCase();
+    }
+
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+      String line = value.toString();
+      if (line.toLowerCase().contains(keyword)) {
+        outVal.set(line);
+        context.write(outKey, outVal);
+      }
+    }
+  }
+
+  public static void main(String[] args) throws Exception {
+    Configuration conf = new Configuration();
+    conf.set("keyword", args[2]);
+
+    Job job = Job.getInstance(conf, "filter by keyword");
+    job.setJarByClass(FilterByKeyword.class);
+    job.setMapperClass(FilterMapper.class);
+    job.setNumReduceTasks(0);
+
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(Text.class);
+
+    FileInputFormat.addInputPath(job, new Path(args[0]));
+    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+    System.exit(job.waitForCompletion(true) ? 0 : 1);
+  }
+}
+Step 2: Compile + Jar
+mkdir -p classes_filter
+javac -classpath "$(hadoop classpath)" -d classes_filter FilterByKeyword.java
+jar -cvf filter.jar -C classes_filter/ .
+Step 3: Run Filtering Job (example keyword: hadoop)
+hdfs dfs -rm -r /mr/output_filter
+hadoop jar filter.jar FilterByKeyword /mr/input /mr/output_filter hadoop
+hdfs dfs -cat /mr/output_filter/part-m-00000
+Step 4: Observe Parallel Execution Flow
+Open browser:
+http://localhost:8088
+Check:
+•	Applications → click your job
+•	View “Number of Maps” and task attempts
+•	Open logs for each container (shows parallel execution)
+________________________________________
+Expected Output
+1) Filter Output
+hdfs dfs -cat /mr/output_filter/part-m-00000
+Expected:
+hadoop mapreduce hadoop
+big data hadoop
+hadoop is distributed
+2) YARN UI Observation (Expected)
+In YARN UI you will see:
+•	Application state: FINISHED
+•	Map tasks: ≥ 1 (depends on input splits)
+•	Containers created for map tasks
+•	Logs show mapper execution details
+________________________________________
+Result
+Thus, the MapReduce filtering program was executed successfully and lines containing the given keyword were extracted. The job was monitored using YARN UI to observe the MapReduce execution flow and parallel task execution.
+
