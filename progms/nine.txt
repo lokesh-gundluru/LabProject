@@ -1,76 +1,53 @@
 #NINE
-# This program implements a simple Recurrent Neural Network (RNN) for sentiment analysis on the
-# === IMPORT ===
+# This program builds and trains a simple LSTM model for sentiment analysis on the IMDB movie review dataset. It loads the dataset, preprocesses it by padding sequences, constructs the LSTM model, compiles it, and trains it on the training data. After training, it evaluates the model's accuracy on the test set and visualizes the training history. Finally, it makes sample predictions on a few test reviews and compares them to the actual labels.
+# Note: Ensure you have TensorFlow and Matplotlib installed to run this code.
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from tensorflow.keras.datasets import imdb
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, LSTM, Dense
-from sklearn.metrics import confusion_matrix, classification_report, roc_curve, auc
 
-# === LOAD & PREPROCESS ===
-vocab_size, max_len = 10000, 200
+# === LOAD DATA ===
+vocab_size = 10000
+max_len = 200
+
 (X_train, y_train), (X_test, y_test) = imdb.load_data(num_words=vocab_size)
+
 X_train = pad_sequences(X_train, maxlen=max_len)
 X_test = pad_sequences(X_test, maxlen=max_len)
 
-# === MODEL ===
+# === BUILD MODEL ===
 model = Sequential([
     Embedding(vocab_size, 128, input_length=max_len),
     LSTM(64),
     Dense(1, activation='sigmoid')
 ])
 
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+# === COMPILE ===
+model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
 
 # === TRAIN ===
-history = model.fit(X_train, y_train, epochs=5, batch_size=64, validation_split=0.2, verbose=1)
-
-# === PLOT ===
-plt.figure(figsize=(12,4))
-plt.subplot(1,2,1)
-plt.plot(history.history['accuracy'], label='Train')
-plt.plot(history.history['val_accuracy'], label='Val')
-plt.title("Accuracy"); plt.legend()
-
-plt.subplot(1,2,2)
-plt.plot(history.history['loss'], label='Train')
-plt.plot(history.history['val_loss'], label='Val')
-plt.title("Loss"); plt.legend()
-plt.show()
+history = model.fit(X_train, y_train,
+                    epochs=3,
+                    batch_size=64,
+                    validation_split=0.2)
 
 # === EVALUATE ===
 acc = model.evaluate(X_test, y_test, verbose=0)[1]
 print("Test Accuracy:", acc)
 
-# === PREDICTIONS ===
-probs = model.predict(X_test)
-pred = (probs > 0.5).astype(int)
-
-# === CONFUSION MATRIX ===
-cm = confusion_matrix(y_test, pred)
-sns.heatmap(cm, annot=True, fmt="d",
-            xticklabels=["Neg","Pos"],
-            yticklabels=["Neg","Pos"])
-plt.title("Confusion Matrix")
+# === PLOT ===
+plt.plot(history.history['accuracy'], label='Train')
+plt.plot(history.history['val_accuracy'], label='Validation')
+plt.title("Accuracy")
+plt.legend()
 plt.show()
 
-# === REPORT ===
-print(classification_report(y_test, pred))
+# === SAMPLE PREDICTIONS ===
+pred = (model.predict(X_test[:5]) > 0.5).astype(int)
 
-# === ROC CURVE ===
-fpr, tpr, _ = roc_curve(y_test, probs)
-roc_auc = auc(fpr, tpr)
-
-plt.plot(fpr, tpr, label=f"AUC = {roc_auc:.2f}")
-plt.plot([0,1],[0,1],'--')
-plt.xlabel("FPR"); plt.ylabel("TPR")
-plt.title("ROC Curve"); plt.legend()
-plt.show()
-
-# === SAMPLE OUTPUT ===
 for i in range(5):
-    p = probs[i][0]
-    print(f"Sample {i+1}: Pred={'Pos' if p>0.5 else 'Neg'} | Actual={'Pos' if y_test[i]==1 else 'Neg'} | Conf={round(p,2)}")
+    print("Review", i+1, "Prediction:", pred[i][0], "Actual:", y_test[i])
