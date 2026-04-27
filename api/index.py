@@ -16,21 +16,7 @@ def load_program(num):
         "4": "four.txt",
         "5": "five.txt",
         "6": "six.txt",
-        "7": "seven.txt",
-        "8": "eight.txt",
-        "9": "nine.txt",
-        "10": "ten.txt",
-        "11": "eleven.txt",
-        "12": "twelve.txt",
-        "101": "bda1.txt",
-        "201": "bdao1a.txt",
-        "202": "bdao1b.txt",
-        "203": "bdao2.txt",
-        "204": "bdao3.txt",
-        "205": "bdao4.txt",
-        "206": "bdao5.txt",
-        "207": "bdao6.txt",
-        "208": "bdaALL.txt"
+        "7": "seven.txt"
     }
 
     file = filename_map.get(num)

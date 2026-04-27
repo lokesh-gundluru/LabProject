@@ -1,47 +1,104 @@
-#TWO
-# This program implements a simple Perceptron algorithm for binary classification on the Iris dataset using
-# === IMPORT LIBRARIES ===
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+Multinode
+Clone the VM ( full clone ) which you have used for single node
 
-# === LOAD DATASET ===
-iris = load_iris()
-X = iris.data[:, :2]
-y = iris.target
+rightclick on the VM and choose Manage then clone 
+and click on next then choose full clone 
+and name the clone as slave1
+After clone creation 
 
-# === CONVERT TO BINARY CLASSIFICATION ===
-y = [1 if label == 0 else -1 for label in y]
+In master 
+sudo hostnamectl set-hostname master
+then restart the master VM ( Must Done ) 
 
-# === SPLIT DATA ===
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
+In slave1
+sudo hostnamectl set-hostname slave1
+and then restart the slave system too
 
-# === INITIALIZE PARAMETERS ===
-w1, w2 = 0.0, 0.0
-b = 0.0
-lr = 0.1
+after restart 
 
-# === TRAINING LOOP ===
-for _ in range(50):
-    for i in range(len(X_train)):
-        x1, x2 = X_train[i]
-        z = w1*x1 + w2*x2 + b
+check the hostname in both Master and slave1
+using the command:
+hostname
 
-        y_pred = 1 if z >= 0 else -1
+now note the ip addresses of both master and slave1
+using the command : ip a
 
-        if y_train[i] != y_pred:
-            w1 += lr * y_train[i] * x1
-            w2 += lr * y_train[i] * x2
-            b += lr * y_train[i]
+ In master and slave1
+sudo nano /etc/hosts
 
-# === TESTING ===
-y_pred = []
-for i in range(len(X_test)):
-    x1, x2 = X_test[i]
-    z = w1*x1 + w2*x2 + b
-    y_pred.append(1 if z >= 0 else -1)
+add this two lines
+192.168.200.? master
+192.168.200.? slave1
 
-# === ACCURACY ===
-print("Accuracy:", accuracy_score(y_test, y_pred) * 100, "%")
+ then in Master
+
+ssh-copy-id slave1
+
+enter password
+
+In Master
+
+nano $HADOOP_HOME/etc/hadoop/workers
+
+in that remove everything 
+and add the word  slave1
+
+save the file using Ctrl+X, Y, Enter
+
+in both master and slave1 do the following 
+
+nano $HADOOP_HOME/etc/hadoop/core-site.xml
+
+replace everything in it with the below code
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://master:9000</value>
+  </property>
+</configuration>
+
+
+
+nano $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+
+in this file also replace everything with below code 
+
+<configuration>
+  <property>
+    <name>dfs.replication</name>
+    <value>2</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>file:/usr/local/hadoop/data/namenode</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>file:/usr/local/hadoop/data/datanode</value>
+  </property>
+</configuration>
+
+ IN master
+
+mkdir -p /usr/local/hadoop/data/namenode
+mkdir -p /usr/local/hadoop/data/datanode
+
+ In master format again 
+
+hdfs namenode -format
+
+ in master 
+
+start-dfs.sh
+
+ next verify output in both master and slave1 using the command 
+
+
+jps
+
+ then open browser in master VM
+
+and open this url 
+http://master:9870

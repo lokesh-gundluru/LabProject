@@ -1,62 +1,99 @@
-#SEVEN
-# This program implements a Convolutional Neural Network (CNN) for image classification on the MN
-# === IMPORT ===
-import numpy as np
-import matplotlib.pyplot as plt
-from tensorflow.keras.datasets import mnist
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-from tensorflow.keras.utils import to_categorical
+Docker Experiment – 10
+Running and Managing Docker Containers
+Aim
 
-# === LOAD & PREPROCESS ===
-(X_train, y_train), (X_test, y_test) = mnist.load_data()
-X_train, X_test = X_train/255.0, X_test/255.0
-X_train = X_train[..., None]
-X_test = X_test[..., None]
-y_train = to_categorical(y_train, 10)
-y_test = to_categorical(y_test, 10)
+To understand Docker containerization and run/manage containers using Docker commands.
 
-# === MODEL ===
-model = Sequential([
-    Conv2D(32, 3, activation='relu', input_shape=(28,28,1)),
-    MaxPooling2D(),
-    Conv2D(64, 3, activation='relu'),
-    MaxPooling2D(),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')
-])
+Procedure
+Step 1: Check Docker Installation
+docker --help
+docker version
 
-# === COMPILE ===
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+Displays available Docker commands and installed version.
 
-# === TRAIN ===
-history = model.fit(X_train, y_train, epochs=5, batch_size=64, validation_split=0.2, verbose=1)
+Step 2: Run First Container (Ubuntu)
+docker container run -it ubuntu top
 
-# === PLOT ===
-plt.figure(figsize=(12,4))
-plt.subplot(1,2,1)
-plt.plot(history.history['accuracy'], label='Train')
-plt.plot(history.history['val_accuracy'], label='Val')
-plt.title("Accuracy"); plt.legend()
+Explanation:
 
-plt.subplot(1,2,2)
-plt.plot(history.history['loss'], label='Train')
-plt.plot(history.history['val_loss'], label='Val')
-plt.title("Loss"); plt.legend()
-plt.show()
+run → creates and starts container
+-it → interactive terminal
+ubuntu → image name
+top → command executed inside container
 
-# === EVALUATE ===
-acc = model.evaluate(X_test, y_test, verbose=0)[1]
-print("Test Accuracy:", acc)
+If image is not available locally, Docker downloads it automatically from Docker Hub.
 
-# === SAMPLE OUTPUT ===
-pred = np.argmax(model.predict(X_test[:5]), axis=1)
-true = np.argmax(y_test[:5], axis=1)
+Step 3: View Running Containers
 
-for i in range(5):
-    print(f"Image {i+1}: Predicted={pred[i]}, Actual={true[i]}")
-    plt.imshow(X_test[i].squeeze(), cmap='gray')
-    plt.title(f"Predicted: {pred[i]}")
-    plt.axis('off')
-    plt.show()
+Open another terminal and run:
+
+docker container ls
+
+Shows running containers.
+
+Step 4: Enter Running Container
+docker container exec -it <container_id> bash
+
+Example:
+
+docker container exec -it b3ad2a23fab3 bash
+
+Now you are inside container.
+
+Check running processes:
+
+ps -ef
+
+Exit container:
+
+exit
+Step 5: Run Multiple Containers
+Run Nginx Container
+docker container run -d -p 8080:80 --name nginx nginx
+-d → detached mode
+-p 8080:80 → maps host port 8080 to container port 80
+
+Check output:
+
+curl localhost:8080
+Run MongoDB Container
+docker container run -d -p 8081:27017 --name mongo mongo:4.4
+
+Check output:
+
+curl localhost:8081
+Step 6: List All Running Containers
+docker container ls
+Step 7: Stop Containers
+docker container stop nginx mongo
+Step 8: Remove Stopped Containers
+docker system prune -f
+
+Removes:
+
+stopped containers
+unused networks
+dangling images
+Step 9: Create Dockerfile
+FROM ubuntu
+RUN apt-get update
+CMD ["echo","Hello from Docker Container"]
+Step 10: Build Image
+docker build -t myimage .
+Step 11: Run Custom Image
+docker run myimage
+
+Expected Output:
+
+Hello from Docker Container
+Important Docker Commands
+Command	Purpose
+docker ps	Show running containers
+docker images	Show images
+docker stop <id>	Stop container
+docker rm <id>	Remove container
+docker exec -it <id> bash	Enter container
+docker build -t name .	Build image
+Result
+
+Docker containers were successfully created, managed, and executed using Docker CLI commands.

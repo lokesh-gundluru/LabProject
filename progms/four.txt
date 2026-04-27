@@ -1,43 +1,67 @@
-#FOUR
-# This program implements a simple Perceptron algorithm for binary classification on the Iris dataset using
-# === IMPORT ===
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+WEEK 4 BDACC Lab
+Aim: To interact with a large dataset stored in HDFS using Apache Hive and Apache Pig, execute equivalent analytics using HiveQL and Pig Latin, and compare and analyze the query results from both tools on the same dataset.
+Procedure
+A) Dataset Setup in HDFS:
+1. Create HDFS directory.
+2. Upload dataset file (weblogs.tsv) to HDFS.
+3. Verify file upload using HDFS commands.
+B) Hive Procedure:
+1. Start Hive shell.
+2. Create database and external table.
+3. Execute analysis queries (Top URLs, Error %, Total bytes per user).
+C) Pig Procedure:
+1. Start Pig shell.
+2. Load dataset using PigStorage.
+3. Execute equivalent queries using Pig Latin.
+D) Comparison:
+1. Store Hive and Pig outputs in HDFS.
+2. Compare outputs using diff command.
+Code:
+HDFS Commands
+hdfs dfs -mkdir -p /data/weblogs
+hdfs dfs -put weblogs.tsv /data/weblogs/
+hdfs dfs -ls /data/weblogs
+Hive Code (HiveQL)
+CREATE DATABASE IF NOT EXISTS lab;
+USE lab;
 
-# === LOAD DATA ===
-iris=load_iris()
-x=iris.data[:,:2]
-y=iris.target
-y=[1 if label==0 else -1 for label in y]
+CREATE EXTERNAL TABLE IF NOT EXISTS weblogs (
+  ts STRING,
+  user_id STRING,
+  url STRING,
+  status INT,
+  bytes BIGINT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS TEXTFILE
+LOCATION '/data/weblogs';
 
-# === SPLIT ===
-x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
+-- Q1: Top URLs
+SELECT url, COUNT(*) AS hits
+FROM weblogs
+GROUP BY url
+ORDER BY hits DESC
+LIMIT 10;
+Pig Code (Pig Latin)
+weblogs =
+  LOAD '/data/weblogs/weblogs.tsv'
+  USING PigStorage('\t')
+  AS (ts:chararray, user_id:chararray, url:chararray, status:int, bytes:long);
 
-# === INIT ===
-w1,w2=0.0,0.0
-b=0.0
-lr=0.1
-
-# === TRAIN ===
-for _ in range(50):
-  for i in range(len(x_train)):
-    x1,x2=x_train[i]
-    z=w1*x1+w2*x2+b
-    y_pred = 1 if z >= 0 else -1
-
-    if y_train[i] != y_pred:
-      w1+=lr*y_train[i]*x1
-      w2+=lr*y_train[i]*x2
-      b+=lr*y_train[i]
-  print(f"Epochs {_+1}:w1={w1:.2f},w2={w2:.2f},b={b:.2f}")
-
-# === TEST ===
-y_pred=[]
-for i in range(len(x_test)):
-  x1,x2=x_test[i]
-  z=w1*x1+w2*x2+b
-  y_pred.append(1 if z>=0 else -1)
-
-# === OUTPUT ===
-print("ACCURACY:",accuracy_score(y_test,y_pred)*100,"%")
+g = GROUP weblogs BY url;
+hits = FOREACH g GENERATE group AS url, COUNT(weblogs) AS hits;
+sorted = ORDER hits BY hits DESC;
+top10 = LIMIT sorted 10;
+DUMP top10;
+Output:
+Sample Hive Output:
+/home   15420
+/login  12011
+/about  10005
+Sample Pig Output:
+(/home,15420)
+(/login,12011)
+(/about,10005)
+Result:
+The dataset stored in HDFS was successfully analyzed using both Hive and Pig. Equivalent queries written in HiveQL and Pig Latin produced matching results. Hive is suitable for SQL-based structured analytics, while Pig is better for dataflow and ETL processing tasks.

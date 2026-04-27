@@ -1,53 +1,102 @@
-#ONE
-# This program demonstrates various image processing techniques using OpenCV and Matplotlib.
-# === IMPORT LIBRARIES ===
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
+In terminal 
 
-# === LOAD IMAGE ===
-img = cv2.imread('shiv.jpg')
-img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+sudo apt update && sudo apt upgrade -y
+sudo apt install gcc
+nano harsha.c
+gcc harsha.c -o harsha
+./harsha
 
-# === CONVERT TO GRAYSCALE ===
-gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-# === HISTOGRAM EQUALIZATION ===
-equalized = cv2.equalizeHist(gray)
 
-# === THRESHOLDING ===
-_, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+Single node
+#Install java and set path
+sudo apt install openjdk-11-jdk -y
+java -version
+nano ~/.bashrc
 
-# === EDGE DETECTION ===
-edges = cv2.Canny(gray, 100, 200)
+#in ~/.bashrc
+# add these two lines
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export PATH=$PATH:$JAVA_HOME/bin
 
-# === DATA AUGMENTATION ===
-flip = cv2.flip(img, 1)
-rotate = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+source ~/.bashrc
 
-# === MORPHOLOGICAL OPERATIONS ===
-kernel = np.ones((5,5), np.uint8)
-erosion = cv2.erode(thresh, kernel, iterations=1)
-dilation = cv2.dilate(thresh, kernel, iterations=1)
+#Install SSH and enable it
+sudo apt install openssh-server -y
+sudo systemctl start ssh
+sudo systemctl enable ssh
+ssh localhost
+#it will ask for permission so type "yes" then give password as hadoop ( that is given for sudo)
+ssh-keygen -t rsa
+#press enter for all prompts
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+ssh localhost
+#now ssh localhost command works without asking any password
 
-# === STORE RESULTS ===
-images = [img, gray, equalized, thresh, edges, flip, rotate, erosion, dilation]
-titles = ["Original", "Grayscale", "Histogram Eq", "Threshold",
-          "Edges", "Flipped", "Rotated", "Erosion", "Dilation"]
+#Download Hadoop and extract it
+wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+tar -xvzf hadoop-3.3.6.tar.gz
+sudo mv hadoop-3.3.6 /usr/local/hadoop
 
-# === DISPLAY OUTPUT ===
-plt.figure(figsize=(12,10))
+sudo chown -R $USER:$USER /usr/local/hadoop
+nano ~/.bashrc
+# in this add 
+export HADOOP_HOME=/usr/local/hadoop
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+source ~/.bashrc
 
-for i in range(len(images)):
-    plt.subplot(3,3,i+1)
+nano $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 
-    if len(images[i].shape) == 2:
-        plt.imshow(images[i], cmap='gray')
-    else:
-        plt.imshow(images[i])
+#in this search for export JAVA_HOME by using clt+w
+#and uncomment that line and make it as 
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
-    plt.title(titles[i])
-    plt.axis('off')
+cd $HADOOP_HOME/etc/hadoop
+nano core-site.xml
+#in this replace all content with below code 
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://localhost:9000</value>
+  </property>
+</configuration>
 
-plt.tight_layout()
-plt.show()
+nano hdfs-site.xml
+#in this replace all content with code below
+<configuration>
+  <property>
+    <name>dfs.replication</name>
+    <value>1</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>file:/usr/local/hadoop/data/namenode</value>
+  </property>
+
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>file:/usr/local/hadoop/data/datanode</value>
+  </property>
+</configuration>
+cd  -- must to come out of directory
+
+mkdir -p /usr/local/hadoop/data/namenode
+
+mkdir -p /usr/local/hadoop/data/datanode
+
+hdfs namenode -format
+
+start-dfs.sh
+#output
+# Starting namenodes on [localhost]
+# Starting datanodes
+# Starting secondary namenodes
+
+jps
+#output
+# 12785 Jps
+# 12611 SecondaryNameNode
+# 12393 DataNode
+# 12271 NameNode
